@@ -1,0 +1,54 @@
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+enum UserRole {
+    USER
+    ADMIN
+    EDITOR
+    INSTRUCTOR
+}
+
+model Users {
+    id               String    @id @default(auto()) @map("_id") @db.ObjectId
+    username         String    @unique
+    email            String    @unique
+    hashedPassword   String
+    fullName         String?
+    avatar           String?
+    bio              String?
+    role             UserRole? @default(USER)
+    lastLogin        DateTime  @default(now())
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+    emailVerified    Boolean?  @default(false)
+    emailToken       String    @unique
+    emailTokenExpiry DateTime
+    refreshToken     String?
+    resetToken       String?   @unique
+    resetTokenExpiry DateTime?
+    captchaToken     String?
+    loginAttempts    Int       @default(0)
+    lockoutUntil     DateTime?
+
+    @@map("users")
+}
+
+model LoginActivity {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String   @db.ObjectId
+    timestamp DateTime @default(now())
+    ipAddress String?
+    userAgent String?
+    result    String // e.g., 'Success', 'Failed', 'Account Locked'
+    reason    String? // e.g., 'Incorrect Password', 'Account not verified'
+    location  String?
+    sessionId String?
+
+    @@map("login_activities")
+}
