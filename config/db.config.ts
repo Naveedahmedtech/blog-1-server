@@ -8,4 +8,5 @@ export default () => ({
   jwt_secret_key: process.env.JWT_SECRET_KEY!,
   google_client_id: process.env.GOOGLE_CLIENT_ID!,
   google_client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+  port: process.env.PORT!,
 });

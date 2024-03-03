@@ -17,7 +17,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors();
   app.setGlobalPrefix('api');
-  await app.listen(8000);
+  const PORT = process.env.PORT! || 8000;
+  await app.listen(PORT);
 }
 
 bootstrap();
