@@ -7,10 +7,10 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, Users } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { EmailService } from 'src/lib/sendMail';
+import { EmailService } from '../../lib/sendMail';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {

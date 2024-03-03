@@ -21,7 +21,7 @@ import {
   RequestMetaData,
   SuccessResponse,
 } from '../dto/user.dto';
-import { IpAddress } from 'src/decorators/loginDecorator';
+import { IpAddress } from '../../decorators/loginDecorator';
 import { GoogleAuthGuard } from '../guard/google.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';

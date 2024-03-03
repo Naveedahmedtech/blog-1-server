@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../auth/dto/user.dto';
