@@ -10,7 +10,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, Users } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { EmailService } from '../../lib/sendMail';
+// import { EmailService } from '../../lib/sendMail';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -37,7 +37,7 @@ export class UsersService {
 
   constructor(
     private prisma: PrismaService,
-    private readonly emailService: EmailService,
+    // private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private jwtService: JwtService,
   ) {}

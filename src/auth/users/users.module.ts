@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { EmailService } from '../../lib/sendMail';
+// import { EmailService } from '../../lib/sendMail';
 import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from '../../lib/googleStrategy';
 
@@ -16,6 +16,8 @@ import { GoogleStrategy } from '../../lib/googleStrategy';
   ],
   exports: [],
   controllers: [UsersController],
-  providers: [UsersService, PrismaService, EmailService, GoogleStrategy],
+  providers: [UsersService, PrismaService,
+    // EmailService,
+    GoogleStrategy],
 })
 export class UsersModule {}
