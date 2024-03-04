@@ -16,7 +16,11 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin: ['https://naveed-blogs.netlify.com', 'http://localhost:5173'],
+    origin: [
+      'https://naveed-blogs.netlify.com',
+      'https://blog-1-server-7d4o.vercel.app',
+      'http://localhost:5173',
+    ],
   });
 
   app.setGlobalPrefix('api');
