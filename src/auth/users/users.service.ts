@@ -77,11 +77,11 @@ export class UsersService {
       const verificationToken = crypto.randomBytes(bytes).toString('hex');
       const tokenExpiry = new Date();
       tokenExpiry.setHours(tokenExpiry.getHours() + magicNumber);
-      this.emailService.sendVerificationEmail(
-        username,
-        email,
-        verificationToken,
-      );
+      // this.emailService.sendVerificationEmail(
+      //   username,
+      //   email,
+      //   verificationToken,
+      // );
 
       await this.prisma.users.create({
         data: {
@@ -95,7 +95,7 @@ export class UsersService {
       });
 
       return commonResponse<string>(
-        200,
+        201,
         'Please verify your email to continue',
       );
     } catch (error) {
@@ -128,11 +128,11 @@ export class UsersService {
       const emailTokenExpiry = new Date();
       emailTokenExpiry.setHours(emailTokenExpiry.getHours() + magicNumbers);
 
-      this.emailService.sendVerificationEmail(
-        user.username,
-        email,
-        verificationToken,
-      );
+      // this.emailService.sendVerificationEmail(
+      //   user.username,
+      //   email,
+      //   verificationToken,
+      // );
 
       await this.prisma.users.update({
         where: { email: email },
@@ -352,11 +352,11 @@ export class UsersService {
           resetTokenExpiry,
         },
       });
-      this.emailService.sendResetPasswordEmail(
-        user.username,
-        email,
-        resetToken,
-      );
+      // this.emailService.sendResetPasswordEmail(
+      //   user.username,
+      //   email,
+      //   resetToken,
+      // );
       return commonResponse<string>(
         200,
         'We have sent you the link on email to reset the password!',
