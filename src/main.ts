@@ -15,7 +15,10 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.enableCors();
+  app.enableCors({
+    origin: ['https://naveed-blogs.netlify.com', 'http://localhost:5173'],
+  });
+
   app.setGlobalPrefix('api');
   const PORT = process.env.PORT! || 8000;
   await app.listen(PORT);
