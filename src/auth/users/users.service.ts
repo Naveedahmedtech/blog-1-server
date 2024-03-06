@@ -83,6 +83,7 @@ export class UsersService {
       //   verificationToken,
       // );
 
+
       await this.prisma.users.create({
         data: {
           ...registerDto,
@@ -96,7 +97,7 @@ export class UsersService {
 
       return commonResponse<string>(
         201,
-        'Please verify your email to continue',
+        'User register successfully',
       );
     } catch (error) {
       this.logger.error(`Registration error: ${error.message}`);
@@ -287,15 +288,15 @@ export class UsersService {
         throw new NotFoundException('User not found.');
       }
 
-      if (!user.emailVerified) {
-        this.logLoginActivity({
-          user,
-          result: 'Failed',
-          reason: 'Email not verified',
-          metaData,
-        });
-        throw new ForbiddenException('Please verify your email!');
-      }
+      // if (!user.emailVerified) {
+      //   this.logLoginActivity({
+      //     user,
+      //     result: 'Failed',
+      //     reason: 'Email not verified',
+      //     metaData,
+      //   });
+      //   throw new ForbiddenException('Please verify your email!');
+      // }
 
       await this.prisma.users.update({
         where: { email: loginDto.email },
