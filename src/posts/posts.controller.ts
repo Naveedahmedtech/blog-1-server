@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AddPostsDto } from './dto/posts.dto';
 
@@ -13,5 +13,9 @@ export class PostsController {
   @Get('get-all')
   async getAll() {
     return this.tagsService.getAll();
+  }
+  @Get('get-by-category/:category_id')
+  async getByCategoryId(@Param('category_id') categoryId:string) {
+    return this.tagsService.getByCategoryId(categoryId);
   }
 }

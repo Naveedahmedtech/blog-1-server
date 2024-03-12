@@ -87,4 +87,33 @@ export class PostsService {
       throw new InternalServerErrorException(`${error.message}`);
     }
   }
+
+  async getByCategoryId(categoryId: string) {
+    try {
+      const postsByCategory = await this.prisma.posts.findMany({
+        where: {
+          categoryId: categoryId, // Filter posts by categoryId
+        },
+        include: {
+          author: true, // Include all fields from the author
+          category: true, // Include all fields from the category
+          tags: {
+            include: {
+              tag: true, // Include details for each tag associated with the post
+            },
+          },
+        },
+      });
+      return createApiResponse(
+        200,
+        'Posts retrieved successfully',
+        postsByCategory,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving posts by category ID ${categoryId}: ${error.message}`,
+      );
+      throw new InternalServerErrorException(`${error.message}`);
+    }
+  }
 }
