@@ -11,3 +11,15 @@ export function commonResponse<T = string | LoginResponse>(
     result,
   };
 }
+export interface ApiResponse<T> {
+  statusCode: number;
+  message: string;
+  data?: T;
+}
+export function createApiResponse<T>(
+  statusCode: number,
+  message: string,
+  data?: T,
+): ApiResponse<T> {
+  return { statusCode, message, data };
+}

@@ -24,9 +24,6 @@ model Users {
     avatar           String?
     bio              String?
     role             UserRole? @default(USER)
-    lastLogin        DateTime  @default(now())
-    createdAt        DateTime  @default(now())
-    updatedAt        DateTime  @updatedAt
     emailVerified    Boolean?  @default(false)
     emailToken       String    @unique
     emailTokenExpiry DateTime
@@ -36,6 +33,10 @@ model Users {
     captchaToken     String?
     loginAttempts    Int       @default(0)
     lockoutUntil     DateTime?
+    lastLogin        DateTime  @default(now())
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+    Posts            Posts[]
 
     @@map("users")
 }
@@ -52,4 +53,51 @@ model LoginActivity {
     sessionId String?
 
     @@map("login_activities")
+}
+
+model Tags {
+    id        String     @id @default(auto()) @map("_id") @db.ObjectId
+    name      String     @unique
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+    posts     PostTags[] @relation("TagToPosts")
+
+    @@map("tags")
+}
+
+model Categories {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    posts     Posts[] // One-to-many relation with Posts
+
+    @@map("categories")
+}
+
+model Posts {
+    id          String     @id @default(auto()) @map("_id") @db.ObjectId
+    title       String     @unique
+    description String
+    image       String
+    authorId    String     @db.ObjectId
+    author      Users      @relation(fields: [authorId], references: [id])
+    categoryId  String     @db.ObjectId
+    category    Categories @relation(fields: [categoryId], references: [id])
+    tags        PostTags[] @relation("PostToTags")
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+
+    @@map("posts")
+}
+
+model PostTags {
+    id     String @id @default(auto()) @map("_id") @db.ObjectId
+    postId String @db.ObjectId
+    post   Posts  @relation(fields: [postId], references: [id], name: "PostToTags")
+    tagId  String @db.ObjectId
+    tag    Tags   @relation(fields: [tagId], references: [id], name: "TagToPosts")
+
+    @@unique([postId, tagId])
+    @@map("postTags")
 }

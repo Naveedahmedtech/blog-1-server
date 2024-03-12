@@ -4,6 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import dbConfig from '../config/db.config';
 import { UsersModule } from './auth/users/users.module';
 import { PassportModule } from '@nestjs/passport';
+import { TagsModule } from './tags/tags.module';
+import { CategoriesModule } from './categories/categories.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -14,6 +17,9 @@ import { PassportModule } from '@nestjs/passport';
     }),
     PassportModule.register({ defaultStrategy: 'google' }),
     UsersModule,
+    TagsModule,
+    CategoriesModule,
+    PostsModule,
   ],
   controllers: [],
   providers: [PrismaService],
