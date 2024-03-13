@@ -88,6 +88,31 @@ export class PostsService {
     }
   }
 
+  async getById(id: string) {
+    try {
+      const postsById = await this.prisma.posts.findUnique({
+        where: {
+          id: id,
+        },
+        include: {
+          author: true, // Include all fields from the author
+          category: true, // Include all fields from the category
+          tags: {
+            include: {
+              tag: true, // Include details for each tag associated with the post
+            },
+          },
+        },
+      });
+      return createApiResponse(200, 'Post retrieved successfully', postsById);
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving posts by category ID ${id}: ${error.message}`,
+      );
+      throw new InternalServerErrorException(`${error.message}`);
+    }
+  }
+
   async getByCategoryId(categoryId: string) {
     try {
       const postsByCategory = await this.prisma.posts.findMany({

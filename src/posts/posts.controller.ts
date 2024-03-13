@@ -14,8 +14,14 @@ export class PostsController {
   async getAll() {
     return this.tagsService.getAll();
   }
+
+  @Get('get/:id')
+  async getById(@Param('id') id: string) {
+    return this.tagsService.getById(id);
+  }
+
   @Get('get-by-category/:category_id')
-  async getByCategoryId(@Param('category_id') categoryId:string) {
+  async getByCategoryId(@Param('category_id') categoryId: string) {
     return this.tagsService.getByCategoryId(categoryId);
   }
 }
