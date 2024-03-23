@@ -8,6 +8,12 @@ import { TagsModule } from './tags/tags.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PostsModule } from './posts/posts.module';
 
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { UploadsModule } from './uploads/uploads.module';
+
+
+console.log(join(__dirname, '..', 'uploads'));
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -16,10 +22,19 @@ import { PostsModule } from './posts/posts.module';
       load: [dbConfig],
     }),
     PassportModule.register({ defaultStrategy: 'google' }),
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'uploads'),
+    //   exclude: ['/api/(.*)'],
+    //   serveStaticOptions: {
+    //     redirect: false,
+    //     index: false,
+    //   },
+    // }),
     UsersModule,
     TagsModule,
     CategoriesModule,
     PostsModule,
+    UploadsModule,
   ],
   controllers: [],
   providers: [PrismaService],

@@ -18,6 +18,8 @@ export class PostsService {
   async add(body: AddPostsDto) {
     const { title, description, image, authorId, categoryId, tagIds } = body;
 
+    console.log(body);
+
     try {
       const newPost = await this.prisma.posts.create({
         data: {
@@ -81,7 +83,31 @@ export class PostsService {
           },
         },
       });
-      return createApiResponse(201, 'categories retrieved successfully', tags);
+      return createApiResponse(201, 'posts retrieved successfully', tags);
+    } catch (error) {
+      this.logger.error(`Error adding tag: ${error.message}`);
+      throw new InternalServerErrorException(`${error.message}`);
+    }
+  }
+
+  async getAllByAuthor(authorId: string) {
+    console.log(authorId);
+    try {
+      const posts = await this.prisma.posts.findMany({
+        where: {
+          authorId: authorId
+        },
+        include: {
+          author: true, // Assuming you want all fields from the author
+          category: true, // Assuming you want all fields from the category
+          tags: {
+            include: {
+              tag: true, // Fetches details for each tag associated with the post
+            },
+          },
+        },
+      });
+      return createApiResponse(201, 'posts retrieved successfully', posts);
     } catch (error) {
       this.logger.error(`Error adding tag: ${error.message}`);
       throw new InternalServerErrorException(`${error.message}`);
