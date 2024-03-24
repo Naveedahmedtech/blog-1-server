@@ -2,36 +2,31 @@ import {
   IsNotEmpty,
   IsString,
   IsOptional,
-  IsMongoId,
-  IsUrl,
   IsArray,
-  ArrayNotEmpty,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class AddPostsDto {
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   title: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   description: string;
 
-  @IsString()
-  @IsUrl()
-  @IsOptional()
-  image?: string;
-
-  @IsMongoId()
   @IsNotEmpty()
+  @IsString()
   authorId: string;
 
-  @IsMongoId()
   @IsNotEmpty()
+  @IsString()
   categoryId: string;
 
   @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
+  @IsString({ each: true })
+  @IsOptional()
   tagIds: string[];
+
 }

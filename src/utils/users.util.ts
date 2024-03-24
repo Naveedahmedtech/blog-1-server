@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
 import { ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../auth/dto/user.dto';
 import { Users } from '@prisma/client';
+import { Model } from 'mongoose';
+import { UserDocument } from 'models/UserModal';
 
 // ! user registration
 /**
@@ -41,20 +42,22 @@ export const validateRecaptcha = async (
  * @param email
  * @param username
  */
-export const checkForExistingUser = async (
-  prisma: PrismaService,
+export async function checkForExistingUser(
+  userModel: Model<UserDocument>,
   email: string,
   username: string,
-): Promise<void> => {
-  const existEmail = await prisma.users.findUnique({
-    where: { email: email },
+): Promise<void> {
+  // Use Mongoose to check for an existing user by email or username
+  const existingUser = await userModel.findOne({
+    $or: [{ email }, { username }],
   });
-  const existUsername = await prisma.users.findUnique({
-    where: { username: username },
-  });
-  if (existEmail) throw new ConflictException('Email already registered');
-  if (existUsername) throw new ConflictException('Username already taken');
-};
+
+  if (existingUser) {
+    throw new ConflictException(
+      'A user with the given email or username already exists',
+    );
+  }
+}
 
 /**
  * Hashing password
@@ -68,10 +71,7 @@ export const hashPassword = async (password: string): Promise<string> => {
 };
 
 // ! user login
-export const comparePassword = async (loginDto: LoginDto, user: Users) => {
-  const password = await bcrypt.compare(
-    loginDto.hashedPassword,
-    user.hashedPassword,
-  );
+export const comparePassword = async (loginDto: any, hashedPassword: any) => {
+  const password = await bcrypt.compare(loginDto, hashedPassword);
   return password;
 };

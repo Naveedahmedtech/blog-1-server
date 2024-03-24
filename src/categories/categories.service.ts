@@ -4,42 +4,49 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AddTags } from './dto/tags.dto';
-import { commonResponse, createApiResponse } from 'src/utils/commonResponse.utli';
+import { InjectModel } from '@nestjs/mongoose';
+import { createApiResponse } from 'src/utils/commonResponse.utli';
 
 @Injectable()
 export class CategoriesService {
   private readonly logger = new Logger(CategoriesService.name);
-  constructor(private prisma: PrismaService) {}
-  async add(body: AddTags) {
+
+  constructor(
+    @InjectModel('Category')
+    private categoryModel,
+  ) {}
+
+  async add(body: any): Promise<any> {
     const { name } = body;
     try {
-      const existingTag = await this.prisma.categories.findUnique({
-        where: { name: name },
-      });
+      const existingCategory = await this.categoryModel
+        .findOne({ name })
+        .exec();
 
-      if (existingTag) {
-        throw new ConflictException('Tag with this name already exists.');
+      if (existingCategory) {
+        throw new ConflictException('Category with this name already exists.');
       }
 
-      // If tag doesn't exist, create a new one
-      const newTag = await this.prisma.categories.create({
-        data: { name: name },
-      });
-      return createApiResponse(201, 'categories added successfully', newTag);
+      const newCategory = new this.categoryModel({ name });
+      await newCategory.save();
+
+      return createApiResponse(201, 'Category added successfully', newCategory);
     } catch (error) {
-      this.logger.error(`Error adding tag: ${error.message}`);
+      this.logger.error(`Error adding category: ${error.message}`);
       throw new InternalServerErrorException(`${error.message}`);
     }
   }
 
-  async getAll() {
+  async getAll(): Promise<any> {
     try {
-      const tags = await this.prisma.categories.findMany({});
-      return createApiResponse(201, 'categories retrieved successfully', tags);
+      const categories = await this.categoryModel.find().exec();
+      return createApiResponse(
+        200,
+        'Categories retrieved successfully',
+        categories,
+      ); // Note: Changed status code to 200 for successful retrieval
     } catch (error) {
-      this.logger.error(`Error adding tag: ${error.message}`);
+      this.logger.error(`Error retrieving categories: ${error.message}`);
       throw new InternalServerErrorException(`${error.message}`);
     }
   }

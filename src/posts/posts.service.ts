@@ -3,168 +3,285 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { AddPostsDto } from './dto/posts.dto';
-import {
-  commonResponse,
-  createApiResponse,
-} from 'src/utils/commonResponse.utli';
+import { createApiResponse } from 'src/utils/commonResponse.utli';
+import { InjectModel } from '@nestjs/mongoose';
+import { paginateAndSort } from 'src/utils/pagination.util';
 
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
-  constructor(private prisma: PrismaService) {}
-  async add(body: AddPostsDto) {
-    const { title, description, image, authorId, categoryId, tagIds } = body;
 
-    console.log(body);
+  constructor(
+    @InjectModel('Post') private postModel,
+    @InjectModel('Tag') private tagModel,
+  ) {}
 
+  async add(body: AddPostsDto, imageFilename: string) {
+    const { title, description, authorId, categoryId, tagIds } = body;
     try {
-      const newPost = await this.prisma.posts.create({
-        data: {
-          title,
-          description,
-          image,
-          author: { connect: { id: authorId } },
-          category: { connect: { id: categoryId } },
-        },
-      });
-
-      // Now, for each tagId, create an entry in the PostTags join table
-      await Promise.all(
-        tagIds.map((tagId) =>
-          this.prisma.postTags.create({
-            data: {
-              post: { connect: { id: newPost.id } },
-              tag: { connect: { id: tagId } },
-            },
-          }),
-        ),
-      );
-
-      // Optionally, return the new post with its tags loaded
-      const post = await this.prisma.posts.findUnique({
-        where: { id: newPost.id },
-        include: {
-          tags: {
-            include: {
-              tag: true, // Adjust based on how you want to include related data
-            },
-          },
-        },
-      });
-
-      return createApiResponse(201, 'Post added successfully', post);
-    } catch (error) {
-      this.logger.error(`Error adding post: ${error.message}`);
-
-      // Specific error handling can be implemented here based on Prisma error codes
-      if (error.code === 'P2002') {
+      const existingPost = await this.postModel.findOne({ title }).exec();
+      if (existingPost) {
         throw new ConflictException(
-          'A post with the provided title already exists',
+          'A post with the provided title already exists.',
         );
       }
 
+      console.log(tagIds); // Should be an array of ObjectId strings
+      for (const tagId of tagIds) {
+        const tagExists = await this.tagModel.findById(tagId).exec();
+        if (!tagExists) {
+          throw new NotFoundException(`Tag with ID ${tagId} not found`);
+        }
+      }
+
+      const newPost = await this.postModel.create({
+        title,
+        description,
+        image: imageFilename,
+        authorId,
+        categoryId,
+        tags: tagIds, // Directly assigning an array of tagIds
+      });
+
+      return createApiResponse(201, 'Post added successfully', newPost);
+    } catch (error) {
+      this.logger.error(`Error adding post: ${error}`);
       throw new InternalServerErrorException('Failed to add the post');
     }
   }
 
-  async getAll() {
+  async update(body: any) {
+    const { id, title, description, image, categoryId, tagIds } = body;
+
+    const post = await this.postModel.findById(id).exec();
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    // Check if the title is being updated to a new value and if that new title already exists in another post
+    if (title && title !== post.title) {
+      const existingTitlePost = await this.postModel.findOne({ title }).exec();
+      if (existingTitlePost) {
+        throw new ConflictException(
+          'A post with the provided title already exists.',
+        );
+      }
+    }
+
+    // Verify the existence of each tagId, if tagIds are provided
+    if (tagIds && Array.isArray(tagIds)) {
+      for (const tagId of tagIds) {
+        const tagExists = await this.tagModel.findById(tagId).exec();
+        if (!tagExists) {
+          throw new NotFoundException(`Tag with ID ${tagId} not found`);
+        }
+      }
+    }
+
+    // Build the update object dynamically
+    const updateObj: any = {};
+    if (title) updateObj.title = title;
+    if (description) updateObj.description = description;
+    if (image) updateObj.image = image;
+    if (categoryId) updateObj.categoryId = categoryId;
+    if (tagIds) updateObj.tags = tagIds;
+
     try {
-      const tags = await this.prisma.posts.findMany({
-        include: {
-          author: true, // Assuming you want all fields from the author
-          category: true, // Assuming you want all fields from the category
-          tags: {
-            include: {
-              tag: true, // Fetches details for each tag associated with the post
-            },
-          },
-        },
-      });
-      return createApiResponse(201, 'posts retrieved successfully', tags);
+      const updatedPost = await this.postModel
+        .findByIdAndUpdate(id, updateObj, { new: true })
+        .exec();
+      return createApiResponse(200, 'Post updated successfully', updatedPost);
     } catch (error) {
-      this.logger.error(`Error adding tag: ${error.message}`);
-      throw new InternalServerErrorException(`${error.message}`);
+      this.logger.error(`Error updating post: ${error}`);
+      throw new InternalServerErrorException('Failed to update the post');
     }
   }
 
-  async getAllByAuthor(authorId: string) {
-    console.log(authorId);
+  async getAll(queryParams) {
+    const { page, limit, sortBy, sortOrder, categoryId } = queryParams;
+
+    const populateOptions = ['authorId', 'categoryId', 'tags'];
+
+    let filter = {} as any;
+    if (categoryId) {
+      filter.categoryId = categoryId;
+    }
+
     try {
-      const posts = await this.prisma.posts.findMany({
-        where: {
-          authorId: authorId
-        },
-        include: {
-          author: true, // Assuming you want all fields from the author
-          category: true, // Assuming you want all fields from the category
-          tags: {
-            include: {
-              tag: true, // Fetches details for each tag associated with the post
-            },
-          },
-        },
-      });
-      return createApiResponse(201, 'posts retrieved successfully', posts);
+      const result = await paginateAndSort(
+        this.postModel,
+        { page, limit, sortBy, sortOrder, filter },
+        populateOptions,
+      );
+
+      return createApiResponse(200, 'Posts retrieved successfully', result);
     } catch (error) {
-      this.logger.error(`Error adding tag: ${error.message}`);
-      throw new InternalServerErrorException(`${error.message}`);
+      this.logger.error(`Error retrieving posts: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to retrieve posts`);
+    }
+  }
+
+  // async getAll(queryParams) {
+  //   const { page, limit, sortBy, sortOrder, categoryId } = queryParams;
+
+  //   const populateOptions = ['authorId', 'categoryId', 'tags'];
+
+  //   let filter = {} as any;
+  //   if (categoryId) {
+  //     filter.categoryId = categoryId;
+  //   }
+
+  //   try {
+  //     const result = await paginateAndSort(
+  //       this.postModel,
+  //       {
+  //         page,
+  //         limit,
+  //         sortBy,
+  //         sortOrder,
+  //         filter,
+  //       },
+  //       populateOptions,
+  //     );
+
+  //     return createApiResponse(200, 'Posts retrieved successfully', result);
+  //   } catch (error) {
+  //     this.logger.error(`Error retrieving posts: ${error.message}`);
+  //     throw new InternalServerErrorException(`Failed to retrieve posts`);
+  //   }
+  // }
+
+  async getAllByAuthor(authorId: string, queryParams) {
+    const { page, limit, sortBy, sortOrder, categoryId } = queryParams;
+
+    try {
+      const populateOptions = ['authorId', 'categoryId', 'tags'];
+      let filter = { authorId } as any;
+      if (categoryId) {
+        filter.categoryId = categoryId;
+      }
+      const result = await paginateAndSort(
+        this.postModel,
+        {
+          page,
+          limit,
+          sortBy,
+          sortOrder,
+          filter,
+        },
+        populateOptions,
+      );
+
+      return createApiResponse(200, 'Posts retrieved successfully', result);
+    } catch (error) {
+      this.logger.error(`Error retrieving posts by author: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to retrieve posts by author`,
+      );
     }
   }
 
   async getById(id: string) {
     try {
-      const postsById = await this.prisma.posts.findUnique({
-        where: {
-          id: id,
-        },
-        include: {
-          author: true, // Include all fields from the author
-          category: true, // Include all fields from the category
-          tags: {
-            include: {
-              tag: true, // Include details for each tag associated with the post
-            },
-          },
-        },
-      });
-      return createApiResponse(200, 'Post retrieved successfully', postsById);
+      const postById = await this.postModel
+        .findById(id)
+        .populate('authorId') // Assuming the authorId references the Author model
+        .populate('categoryId') // Assuming the categoryId references the Category model
+        .populate('tags') // Directly populates the array of tags
+        .exec();
+
+      if (!postById) {
+        throw new NotFoundException(`Post with ID ${id} not found.`);
+      }
+
+      return createApiResponse(200, 'Post retrieved successfully', postById);
     } catch (error) {
-      this.logger.error(
-        `Error retrieving posts by category ID ${id}: ${error.message}`,
-      );
-      throw new InternalServerErrorException(`${error.message}`);
+      this.logger.error(`Error retrieving post by ID ${id}: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to retrieve post`);
     }
   }
 
   async getByCategoryId(categoryId: string) {
     try {
-      const postsByCategory = await this.prisma.posts.findMany({
-        where: {
-          categoryId: categoryId, // Filter posts by categoryId
-        },
-        include: {
-          author: true, // Include all fields from the author
-          category: true, // Include all fields from the category
-          tags: {
-            include: {
-              tag: true, // Include details for each tag associated with the post
-            },
-          },
-        },
-      });
+      const posts = await this.postModel
+        .find({ categoryId }) // Find posts by authorId
+        .populate('authorId') // Populates author details, adjust the field if necessary
+        .populate('categoryId') // Populates category details, adjust the field if necessary
+        .populate('tags') // Correctly populates the array of tags
+        .sort({ createdAt: -1 })
+        .exec(); // Executes the query
+
       return createApiResponse(
         200,
-        'Posts retrieved successfully',
-        postsByCategory,
+        'Posts retrieved successfully by author',
+        posts,
       );
     } catch (error) {
-      this.logger.error(
-        `Error retrieving posts by category ID ${categoryId}: ${error.message}`,
+      this.logger.error(`Error retrieving posts by author: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to retrieve posts by author`,
       );
-      throw new InternalServerErrorException(`${error.message}`);
+    }
+  }
+
+  async getTrendingPosts(queryParams) {
+    const { page = 1, limit = 10 } = queryParams;
+
+    // First, find the ID of the "trending" tag
+    const trendingTag = await this.tagModel
+      .findOne({ name: '#trending' })
+      .exec();
+    if (!trendingTag) {
+      throw new NotFoundException('Trending tag not found');
+    }
+
+    const filter = {
+      tags: trendingTag._id, // Filter posts that include the "trending" tag ID
+    };
+
+    const populateOptions = ['authorId', 'categoryId', 'tags'];
+
+    try {
+      const result = await paginateAndSort(
+        this.postModel,
+        {
+          page,
+          limit,
+          sortBy: 'createdAt', // You can adjust this based on your needs
+          sortOrder: -1, // Sorting by the newest posts first
+          filter,
+        },
+        populateOptions,
+      );
+
+      return createApiResponse(
+        200,
+        'Trending posts retrieved successfully',
+        result,
+      );
+    } catch (error) {
+      this.logger.error(`Error retrieving trending posts: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to retrieve trending posts`,
+      );
+    }
+  }
+
+  async delete(id: string) {
+    const post = await this.postModel.findById(id).exec();
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    try {
+      await this.postModel.findByIdAndDelete(id).exec();
+      return createApiResponse(200, 'Post deleted successfully', {});
+    } catch (error) {
+      this.logger.error(`Error deleting post: ${error}`);
+      throw new InternalServerErrorException('Failed to delete the post');
     }
   }
 }

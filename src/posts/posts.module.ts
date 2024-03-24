@@ -1,11 +1,18 @@
 import { Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { PostsController } from './posts.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { postSchema } from '../../models/post';
+import { tagSchema } from '../../models/tag';
 
 @Module({
-  exports: [],
+  imports: [
+    MongooseModule.forFeature([
+      { name: 'Post', schema: postSchema },
+      { name: 'Tag', schema: tagSchema },
+    ]),
+  ],
   controllers: [PostsController],
-  providers: [PostsService, PrismaService],
+  providers: [PostsService],
 })
 export class PostsModule {}
