@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
-import { AddPostsDto } from './dto/posts.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 

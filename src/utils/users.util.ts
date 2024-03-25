@@ -2,8 +2,6 @@ import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { LoginDto } from '../auth/dto/user.dto';
-import { Users } from '@prisma/client';
 import { Model } from 'mongoose';
 import { UserDocument } from 'models/UserModal';
 
