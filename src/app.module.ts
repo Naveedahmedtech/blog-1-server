@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import dbConfig from '../config/db.config';
-import { PassportModule } from '@nestjs/passport';
 import { TagsModule } from './tags/tags.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PostsModule } from './posts/posts.module';

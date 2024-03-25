@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseService } from 'src/prisma/connectiondb.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { userSchema } from '../../../models/UserModal';
+import { userSchema } from '../../../models/userModal';
 import { loginActivitySchema } from '../../../models/loginActivity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
