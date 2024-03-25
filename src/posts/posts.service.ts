@@ -6,9 +6,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AddPostsDto } from './dto/posts.dto';
-import { createApiResponse } from 'src/utils/commonResponse.utli';
+import { createApiResponse } from '../utils/commonResponse.utli';
 import { InjectModel } from '@nestjs/mongoose';
-import { paginateAndSort } from 'src/utils/pagination.util';
+import { paginateAndSort } from '../utils/pagination.util';
 
 @Injectable()
 export class PostsService {

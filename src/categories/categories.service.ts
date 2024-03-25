@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { createApiResponse } from 'src/utils/commonResponse.utli';
+import { createApiResponse } from '../utils/commonResponse.utli';
 
 @Injectable()
 export class CategoriesService {

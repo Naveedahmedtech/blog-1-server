@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { AddTags } from './dto/tags.dto';
-import { TagModel } from 'models/tag';
-import { createApiResponse } from 'src/utils/commonResponse.utli';
+import { createApiResponse } from '../utils/commonResponse.utli';
 
 @Injectable()
 export class TagsService {
