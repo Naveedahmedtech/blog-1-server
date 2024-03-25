@@ -2,12 +2,10 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  checkForExistingUser,
   comparePassword,
   hashPassword,
 } from '../../utils/users.util';
@@ -19,7 +17,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { NOTFOUND } from 'dns';
 
 @Injectable()
 export class UsersService {
@@ -112,9 +109,6 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException('User not found.');
       }
-
-      console.log('password', password);
-      console.log('ueser password', user.hashedPassword);
 
       const passwordMatch = await comparePassword(
         password,

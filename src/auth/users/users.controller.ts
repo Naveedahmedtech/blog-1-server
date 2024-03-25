@@ -1,30 +1,14 @@
 import {
   Controller,
   Post,
-  Get,
-  Put,
-  Delete,
   Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-  Req,
-  Res,
-  InternalServerErrorException,
   Patch,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
-  LoginDto,
-  LoginResponse,
-  RegisterDto,
   RequestMetaData,
-  SuccessResponse,
 } from '../dto/user.dto';
 import { IpAddress } from '../../decorators/loginDecorator';
-import { GoogleAuthGuard } from '../guard/google.guard';
-import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
