@@ -8,7 +8,8 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new Logger(),
-  });
+    cors: true
+  }, );
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,13 +19,13 @@ async function bootstrap() {
   );
   app.useStaticAssets(join(__dirname, '../uploads'));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.enableCors({
-    origin: [
-      'https://naveed-blogs.netlify.com',
-      'https://blog-1-server-7d4o.vercel.app',
-      'http://localhost:5173',
-    ],
-  });
+  // app.enableCors({
+  //   // origin: [
+  //   //   'https://naveed-blogs.netlify.com',
+  //   //   'https://blog-1-server-7d4o.vercel.app',
+  //   //   'http://localhost:5173',
+  //   // ],
+  // });
 
   app.setGlobalPrefix('api');
   const PORT = process.env.PORT! || 8000;
