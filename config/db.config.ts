@@ -9,4 +9,7 @@ export default () => ({
   google_client_id: process.env.GOOGLE_CLIENT_ID!,
   google_client_secret: process.env.GOOGLE_CLIENT_SECRET!,
   port: process.env.PORT!,
+  cloudinary_name: process.env.CLOUDINARY_NAME,
+  cloudinary_secret: process.env.CLOUDINARY_SECRET_KEY!,
+  cloudinary_api_key: process.env.CLOUDINARY_API_KEY!,
 });
