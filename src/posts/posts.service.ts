@@ -19,8 +19,16 @@ export class PostsService {
     @InjectModel('Tag') private tagModel,
   ) {}
 
-  async add(body: AddPostsDto, imageFilename: string) {
-    const { title, description, authorId, categoryId, tagIds } = body;
+  async add(body: any) {
+    const {
+      title,
+      description,
+      authorId,
+      categoryId,
+      tagIds,
+      imageUrl,
+      imageId,
+    } = body;
     try {
       const existingPost = await this.postModel.findOne({ title }).exec();
       if (existingPost) {
@@ -29,7 +37,6 @@ export class PostsService {
         );
       }
 
-      console.log(tagIds); // Should be an array of ObjectId strings
       for (const tagId of tagIds) {
         const tagExists = await this.tagModel.findById(tagId).exec();
         if (!tagExists) {
@@ -40,7 +47,8 @@ export class PostsService {
       const newPost = await this.postModel.create({
         title,
         description,
-        image: imageFilename,
+        image: imageUrl,
+        imageId: imageId,
         authorId,
         categoryId,
         tags: tagIds, // Directly assigning an array of tagIds
@@ -48,13 +56,22 @@ export class PostsService {
 
       return createApiResponse(201, 'Post added successfully', newPost);
     } catch (error) {
-      this.logger.error(`Error adding post: ${error}`);
+      console.log('Error', error);
       throw new InternalServerErrorException('Failed to add the post');
     }
   }
 
   async update(body: any) {
-    const { id, title, description, image, categoryId, tagIds } = body;
+    const {
+      id,
+      title,
+      description,
+      image,
+      categoryId,
+      tagIds,
+      imageUrl,
+      imageId,
+    } = body;
 
     const post = await this.postModel.findById(id).exec();
     if (!post) {
@@ -85,7 +102,8 @@ export class PostsService {
     const updateObj: any = {};
     if (title) updateObj.title = title;
     if (description) updateObj.description = description;
-    if (image) updateObj.image = image;
+    if (imageUrl) updateObj.image = imageUrl;
+    if (imageId) updateObj.imageId = imageId;
     if (categoryId) updateObj.categoryId = categoryId;
     if (tagIds) updateObj.tags = tagIds;
 

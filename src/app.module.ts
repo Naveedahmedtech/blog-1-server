@@ -8,6 +8,7 @@ import { UploadsModule } from './uploads/uploads.module';
 import { MongooseModule } from '@nestjs/mongoose'; // Import MongooseModule
 import { MongooseService } from './prisma/connectiondb.service';
 import { UsersModule } from './auth/users/users.module';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { UsersModule } from './auth/users/users.module';
     UploadsModule,
   ],
   controllers: [],
-  providers: [MongooseService],
-  exports: [MongooseService],
+  providers: [MongooseService, CloudinaryService],
+  exports: [MongooseService, CloudinaryService],
 })
 export class AppModule {}
