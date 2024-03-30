@@ -5,10 +5,10 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { AddPostsDto } from './dto/posts.dto';
 import { createApiResponse } from '../utils/commonResponse.utli';
 import { InjectModel } from '@nestjs/mongoose';
 import { paginateAndSort } from '../utils/pagination.util';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class PostsService {
@@ -17,6 +17,7 @@ export class PostsService {
   constructor(
     @InjectModel('Post') private postModel,
     @InjectModel('Tag') private tagModel,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async add(body: any) {
@@ -295,7 +296,10 @@ export class PostsService {
     }
 
     try {
-      await this.postModel.findByIdAndDelete(id).exec();
+      const deletedPost = await this.postModel.findByIdAndDelete(id).exec();
+      if (deletedPost?.imageId) {
+        await this.cloudinaryService.deleteImage(deletedPost?.imageId);
+      }
       return createApiResponse(200, 'Post deleted successfully', {});
     } catch (error) {
       this.logger.error(`Error deleting post: ${error}`);

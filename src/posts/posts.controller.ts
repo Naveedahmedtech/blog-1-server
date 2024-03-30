@@ -13,25 +13,14 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
-import { diskStorage } from 'multer';
-import * as cloudinary from 'cloudinary';
-import { extname } from 'path';
-import * as streamifier from 'streamifier';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
-    private readonly configService: ConfigService,
     private readonly cloudinaryService: CloudinaryService,
   ) {
-    cloudinary.v2.config({
-      cloud_name: this.configService.get<string>('cloudinary_name'),
-      api_key: this.configService.get<string>('cloudinary_api_key'),
-      api_secret: this.configService.get<string>('cloudinary_secret'),
-    });
   }
 
   @Post('add')
@@ -55,6 +44,7 @@ export class PostsController {
       const postData = { ...body, tagIds, imageUrl: url, imageId: publicId };
       return this.postsService.add(postData);
     } catch (error) {
+      console.log("Error uploading image", error);
       throw new BadRequestException('Failed to upload image');
     }
   }
@@ -72,20 +62,26 @@ export class PostsController {
     }
 
     let imageUrl = body?.imageUrl;
-    let imageId = body?.imageId; 
+    let imageId = body?.imageId;
 
     if (file) {
+      let deleteImage: any;
       try {
         if (imageId) {
-          await this.cloudinaryService.deleteImage(imageId);
+          deleteImage = await this.cloudinaryService.deleteImage(imageId);
         }
 
-        const uploadResult = await this.cloudinaryService.uploadImage(
-          file.buffer,
-        );
-        imageUrl = uploadResult.url;
-        imageId = uploadResult.publicId;
+        console.log(deleteImage?.success);
+
+        if (deleteImage?.success) {
+          const uploadResult = await this.cloudinaryService.uploadImage(
+            file.buffer,
+          );
+          imageUrl = uploadResult.url;
+          imageId = uploadResult.publicId;
+        }
       } catch (error) {
+        console.log(error);
         throw new BadRequestException(
           'Failed to process image upload or deletion.',
         );
