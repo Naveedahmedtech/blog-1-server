@@ -13,31 +13,20 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
-import { diskStorage } from 'multer';
-import * as cloudinary from 'cloudinary';
-import { extname } from 'path';
-import * as streamifier from 'streamifier';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
-    private readonly configService: ConfigService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {
-    cloudinary.v2.config({
-      cloud_name: this.configService.get<string>('cloudinary_name'),
-      api_key: this.configService.get<string>('cloudinary_api_key'),
-      api_secret: this.configService.get<string>('cloudinary_secret'),
-    });
   }
 
   @Post('add')
   @UseInterceptors(FileInterceptor('image'))
   async add(@UploadedFile() file: Express.Multer.File, @Body() body: any) {
-    if (!file) {
-      throw new BadRequestException('An image file is required');
-    }
+    if (!file) throw new BadRequestException('An image file is required');
 
     let tagIds = [];
     try {
@@ -49,28 +38,13 @@ export class PostsController {
     }
 
     try {
-      // Adjusted upload process for handling buffer
-      const result = await new Promise<any>((resolve, reject) => {
-        const uploadStream = cloudinary.v2.uploader.upload_stream(
-          { resource_type: 'auto', folder: 'blog_v1/posts' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          },
-        );
-
-        streamifier.createReadStream(file.buffer).pipe(uploadStream);
-      });
-
-      const postData = {
-        ...body,
-        tagIds,
-      };
-
-      // Call your service layer to save the post data
-      return this.postsService.add(postData, result?.secure_url);
+      const { url, publicId } = (await this.cloudinaryService.uploadImage(
+        file.buffer,
+      )) as any;
+      const postData = { ...body, tagIds, imageUrl: url, imageId: publicId };
+      return this.postsService.add(postData);
     } catch (error) {
-      console.error('Cloudinary upload failed:', error);
+      console.log("Error uploading image", error);
       throw new BadRequestException('Failed to upload image');
     }
   }
@@ -87,37 +61,34 @@ export class PostsController {
       throw new BadRequestException('tagIds must be a valid JSON array string');
     }
 
-    // Default to existing image URL if provided, otherwise upload new image
-    let imageUrl = body.image;
+    let imageUrl = body?.imageUrl;
+    let imageId = body?.imageId;
 
     if (file) {
+      let deleteImage: any;
       try {
-        // Adjusted upload process for handling buffer
-        const result = await new Promise<any>((resolve, reject) => {
-          const uploadStream = cloudinary.v2.uploader.upload_stream(
-            { resource_type: 'auto', folder: 'blog_v1/posts' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            },
+        if (imageId) {
+          deleteImage = await this.cloudinaryService.deleteImage(imageId);
+        }
+
+        console.log(deleteImage?.success);
+
+        if (deleteImage?.success) {
+          const uploadResult = await this.cloudinaryService.uploadImage(
+            file.buffer,
           );
-
-          streamifier.createReadStream(file.buffer).pipe(uploadStream);
-        });
-
-        imageUrl = result.secure_url;
+          imageUrl = uploadResult.url;
+          imageId = uploadResult.publicId;
+        }
       } catch (error) {
-        console.error('Cloudinary upload failed:', error);
-        throw new BadRequestException('Failed to upload image');
+        console.log(error);
+        throw new BadRequestException(
+          'Failed to process image upload or deletion.',
+        );
       }
     }
 
-    // Include the resolved imageUrl (either newly uploaded or existing) in postData
-    const postData = {
-      ...body,
-      tagIds,
-      image: imageUrl,
-    };
+    const postData = { ...body, tagIds, imageUrl, imageId };
 
     return this.postsService.update(postData);
   }

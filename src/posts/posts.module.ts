@@ -4,6 +4,7 @@ import { PostsController } from './posts.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { postSchema } from '../../models/post';
 import { tagSchema } from '../../models/tag';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { tagSchema } from '../../models/tag';
     ]),
   ],
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [PostsService, CloudinaryService],
 })
 export class PostsModule {}
